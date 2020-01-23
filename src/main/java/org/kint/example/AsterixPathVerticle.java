@@ -21,6 +21,8 @@ public class AsterixPathVerticle extends AbstractVerticle {
     router.post("/my-path/*").handler(BodyHandler.create());
     router.post("/my-path").handler(this::handlePost);
 
+    router.get("/my-path").handler(this::handleGet);
+
     vertx.createHttpServer()
       .requestHandler(router)
       .listen(11981, ar -> {
@@ -47,6 +49,20 @@ public class AsterixPathVerticle extends AbstractVerticle {
 
       response.end(body.encodePrettily());
     }
+
+    logger.info("Handled a request on path {} from {}", context.request().path(),
+      context.request().remoteAddress().host());
+  }
+
+  private void handleGet(RoutingContext context) {
+    HttpServerResponse response = context.response();
+
+    response.setStatusCode(200);
+    response.putHeader("content-type", "application/json; charset=utf-8");
+
+    JsonObject responseBody = new JsonObject().put("example-property", "foo");
+
+    response.end(responseBody.encodePrettily());
 
     logger.info("Handled a request on path {} from {}", context.request().path(),
       context.request().remoteAddress().host());

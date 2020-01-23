@@ -44,4 +44,29 @@ class AsterixPathTest {
         }));
     }));
   }
+
+  @Test
+  @DisplayName("Should be able to get resource")
+  void shouldBeAbleToGetResource(Vertx vertx, VertxTestContext testContext) {
+    WebClient webClient = WebClient.create(vertx);
+    Checkpoint deploymentCheckpoint = testContext.checkpoint();
+    Checkpoint requestCheckpoint = testContext.checkpoint(1);
+
+    vertx.deployVerticle(new AsterixPathVerticle(), testContext.succeeding(id -> {
+      deploymentCheckpoint.flag();
+
+      webClient.get(11981, "localhost", "/my-path")
+        .as(BodyCodec.string())
+        .send(testContext.succeeding(response -> {
+          testContext.verify(() -> {
+            assertThat(response.statusCode()).isEqualTo(200);
+
+            JsonObject responseBody = new JsonObject(response.body());
+            assertThat(responseBody.getString("example-property")).isEqualTo("foo");
+
+            requestCheckpoint.flag();
+          });
+        }));
+    }));
+  }
 }
