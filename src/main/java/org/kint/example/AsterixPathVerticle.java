@@ -21,6 +21,7 @@ public class AsterixPathVerticle extends AbstractVerticle {
     router.post("/my-path/*").handler(BodyHandler.create());
     router.post("/my-path").handler(this::handlePost);
 
+    router.get("/my-path/*").handler(this::requireHeader);
     router.get("/my-path").handler(this::handleGet);
 
     vertx.createHttpServer()
@@ -32,6 +33,21 @@ public class AsterixPathVerticle extends AbstractVerticle {
           startPromise.fail(ar.cause());
         }
       });
+  }
+
+  private void requireHeader(RoutingContext routingContext) {
+    final String REQUIRED_HEADER_NAME = "example-required-header";
+
+    if (routingContext.request().headers().contains(REQUIRED_HEADER_NAME)) {
+      routingContext.next();
+    }
+    else {
+      HttpServerResponse response = routingContext.response();
+
+      response.setStatusCode(400);
+      response.putHeader("content-type", "text/plain");
+      response.end(String.format("`%s` must be provided", REQUIRED_HEADER_NAME));
+    }
   }
 
   private void handlePost(RoutingContext context) {
